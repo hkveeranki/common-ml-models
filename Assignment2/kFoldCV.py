@@ -23,23 +23,33 @@ def validate_set(training_data, testing_data, w_init, epochs):
     Algo.run_voted(training_data)
     classifiers = Algo.weights
     votes = Algo.votes
-    cnt = 0
+    cnt1 = 0
     for data in testing_data:
         x, y = make_data(data)
         c = get_value(classifiers, votes, x)
         if sign(c) == y:
-            cnt += 1
-    return cnt
+            cnt1 += 1
+    cnt2 = 0
+    for data in testing_data:
+        x, y = make_data(data)
+        c = dot_product(classifiers[-1], x)
+        if sign(c) == y:
+            cnt2 += 1
+
+    return cnt1, cnt2
 
 
 def kfoldcv(data_chunks, fold, w_init, epochs):
     """ Runs the K fold Cross validation"""
-    cnt = 0
+    cnt1 = 0
+    cnt2 = 0
     for i in range(fold):
         training_data = []
         for j in range(fold):
             if i != j:
                 for k in data_chunks[j]:
                     training_data.append(k)
-        cnt += validate_set(training_data, data_chunks[i], w_init, epochs)
-    return cnt
+        cnt = validate_set(training_data, data_chunks[i], w_init, epochs)
+        cnt1 += cnt[0]
+        cnt2 += cnt[1]
+    return cnt1, cnt2

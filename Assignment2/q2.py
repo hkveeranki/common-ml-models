@@ -52,12 +52,18 @@ cancer_w = [0 for i in range(attrn_cancer)]
 ionosphere_w = [0 for j in range(attrn_ionosphere)]
 
 epochs = [10, 15, 20, 25, 30, 35, 40, 45, 50]
-cancer_acc = []
-ionosphere_acc = []
+cancer_acc_voted = []
+ionosphere_acc_voted = []
+cancer_acc_normal = []
+ionosphere_acc_normal = []
 for epoch in epochs:
     correct = kfoldcv(cancer_chunks, 10, cancer_w, epoch)
-    cancer_acc.append(float(correct) / len(cancer_data))
-    print(cancer_acc[-1])
+    cancer_acc_voted.append(float(correct[0]) / len(cancer_data))
+    cancer_acc_normal.append(float(correct[1]) / len(cancer_data))
     correct = kfoldcv(ionosphere_chunks, 10, ionosphere_w, epoch)
-    ionosphere_acc.append(float(correct) / len(ionosphere_data))
-    print(ionosphere_acc[-1])
+    ionosphere_acc_voted.append(float(correct[0]) / len(ionosphere_data))
+    ionosphere_acc_normal.append(float(correct[1]) / len(ionosphere_data))
+    print("done for ", epoch)
+
+print(ionosphere_acc_normal, ionosphere_acc_voted)
+print(cancer_acc_normal, cancer_acc_voted)

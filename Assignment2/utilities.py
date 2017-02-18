@@ -48,7 +48,6 @@ def crunch_data(filename, classdecider, type_converter, start):
                     x[i] = type_converter(x[i])
                 x.append(classdecider(s[n - 1]))
                 data.append(x)
+        return data, n - 1 - start
     except IOError:
         sys.stderr.write('unable to open the given data file')
-
-    return data, n - 1 - start
