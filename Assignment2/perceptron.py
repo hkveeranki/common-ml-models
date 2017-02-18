@@ -7,7 +7,7 @@ def dot_product(x, y):
     """ Returns dot product of the two vectors present"""
     prod = 0
     for i in range(len(x)):
-        prod += x[i] *   y[i]
+        prod += x[i] * y[i]
     # prod = round(prod, 2)
     return prod
 
