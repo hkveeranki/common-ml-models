@@ -32,7 +32,7 @@ def update_w(w, x, y):
     return newW
 
 
-def crunch_data(filename, classdecider, type_converter, start):
+def crunch_data(filename, classdecider, type_converter, start=0):
     """ Crunches the data into requirement """
     try:
         f = open(filename, 'r')
@@ -50,4 +50,9 @@ def crunch_data(filename, classdecider, type_converter, start):
                 data.append(x)
         return data, n - 1 - start
     except IOError:
-        sys.stderr.write('unable to open the given data file')
+        error('unable to open the given data file')
+
+
+def error(error_str):
+    """ Prints the error to stderr"""
+    sys.stderr.write(error_str)
