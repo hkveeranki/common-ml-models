@@ -33,6 +33,7 @@ class Fisher:
         delmu = mu1 - mu2
         res = np.dot(swinv, delmu)
         res /= np.linalg.norm(res)
+        self.classsifier = res.tolist()
         return res
 
     def __make_mean(self, matrix):

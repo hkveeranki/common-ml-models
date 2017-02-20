@@ -25,6 +25,9 @@ class LeastSquare:
         mat1 = np.linalg.inv(mat1)
         res = np.dot(mat1, mat2)
         # res /= np.linalg.norm(res)
+
+        self.classifier = res.tolist()
+
         return res
 
     def __process_data(self, data):

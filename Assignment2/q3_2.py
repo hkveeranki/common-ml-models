@@ -28,3 +28,13 @@ Algo = Fisher()
 print(Algo.run(data1, data2))
 ls = LeastSquare()
 print(ls.run(data))
+
+c1x = [data1[i][0] for i in range(len(data1))]
+c1y = [data1[i][1] for i in range(len(data1))]
+c2x = [data2[i][0] for i in range(len(data2))]
+c2y = [data2[i][1] for i in range(len(data2))]
+
+plt.scatter(c1x, c1y, c='blue')
+plt.scatter(c2x, c2y, c='green')
+
+plt.show()
