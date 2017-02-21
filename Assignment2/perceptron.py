@@ -36,4 +36,4 @@ class Perceptron:
             i %= n
 
     def print_summary(self):
-        print("converged with", self.w, 'in', self.steps_taken, 'steps')
+        print("converged at ", self.w, 'in', self.steps_taken, 'steps')

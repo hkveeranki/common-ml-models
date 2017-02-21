@@ -3,6 +3,7 @@ This file contains code for Fisher Linear Discriminant
     """
 import numpy as np
 import copy
+from utilities import dot_product
 
 
 class Fisher:
@@ -34,7 +35,8 @@ class Fisher:
         res = np.dot(swinv, delmu)
         res /= np.linalg.norm(res)
         self.classsifier = res.tolist()
-        return res
+        final_res = self.__find_b(data1, data2, res)
+        return final_res
 
     def __make_mean(self, matrix):
         """ returns the mean vector for the matrix"""
@@ -58,3 +60,17 @@ class Fisher:
                 cov.append(sum)
             covariance.append(cov)
         return covariance
+
+    def __find_b(self, data1, data2, classifier):
+        """ Finds the range of b and picks a b for our classifier"""
+        c = classifier.transpose().tolist()[0]
+        minb = -int("9" * 20)
+        maxb = int("9" * 20)
+        for data in data1:
+            val = -dot_product(c, data)
+            minb = max(minb, val)
+        for data in data2:
+            val = -dot_product(c, data)
+            maxb = min(maxb, val)
+        c.append((minb + maxb) / 2)
+        return c

@@ -7,6 +7,7 @@ from random import shuffle
 import matplotlib.pyplot as plt
 import numpy as np
 
+
 cancerfile = 'breast-cancer-wisconsin.data'
 ionospherefile = 'ionosphere.data'
 
@@ -58,17 +59,22 @@ cancer_acc_voted = []
 ionosphere_acc_voted = []
 cancer_acc_normal = []
 ionosphere_acc_normal = []
+
 for epoch in epochs:
     correct = kfoldcv(cancer_chunks, 10, cancer_w, epoch)
     cancer_acc_voted.append(float(correct[0]) / len(cancer_data))
     cancer_acc_normal.append(float(correct[1]) / len(cancer_data))
+    cancer_acc_voted[-1] *= 100
+    cancer_acc_normal[-1] *= 100
     correct = kfoldcv(ionosphere_chunks, 10, ionosphere_w, epoch)
     ionosphere_acc_voted.append(float(correct[0]) / len(ionosphere_data))
     ionosphere_acc_normal.append(float(correct[1]) / len(ionosphere_data))
+    ionosphere_acc_normal[-1] *= 100
+    ionosphere_acc_voted[-1] *= 100
     print("done for ", epoch)
 
-print(ionosphere_acc_normal, ionosphere_acc_voted)
-print(cancer_acc_normal, cancer_acc_voted)
+# print(ionosphere_acc_normal, ionosphere_acc_voted)
+# print(cancer_acc_normal, cancer_acc_voted)
 
 plt.plot(epochs, ionosphere_acc_voted, 'blue', label='ionosphere voted_perceptron')
 plt.plot(epochs, ionosphere_acc_normal, 'brown', label='ionosphere perceptron')

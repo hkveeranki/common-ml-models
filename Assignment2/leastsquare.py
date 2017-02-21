@@ -10,7 +10,7 @@ class LeastSquare:
 
     def __init__(self):
         """Default Constructor"""
-        self.classsifier = None
+        self.classifier = None
 
     def run(self, data):
         """ Runs the Least square approach algorithm
@@ -25,9 +25,7 @@ class LeastSquare:
         mat1 = np.linalg.inv(mat1)
         res = np.dot(mat1, mat2)
         # res /= np.linalg.norm(res)
-
-        self.classifier = res.tolist()
-
+        self.classifier = res.transpose().tolist()[0]
         return res
 
     def __process_data(self, data):

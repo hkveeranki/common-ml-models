@@ -33,7 +33,8 @@ class votedPerceptron:
                     self.weights.append(curW)
                     # print(prevW, 'with votes', self.votes[n - 1], " => ", self.weights[n], "for", y, c)
                     self.votes[n] = 1
-                self.votes[n] += 1
+                else:
+                    self.votes[n] += 1
 
     def run_normal(self, data):
         """Runs normal perceptron with iterations"""
@@ -50,4 +51,4 @@ class votedPerceptron:
     def print_summary(self):
         # for i in range(len(self.weights)):
         #    print(self.weights[i], self.votes[i])
-        print(len(self.weights))
+        print("Number of classifiers", len(self.weights))

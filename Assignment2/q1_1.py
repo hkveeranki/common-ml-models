@@ -1,6 +1,11 @@
 from perceptron import Perceptron
 import matplotlib.pyplot as plt
 import numpy as np
+from utilities import crunch_data, error
+
+
+def class_decider(x):
+    return int(x)
 
 
 def generate_graph_data(given_data):
@@ -18,15 +23,13 @@ def generate_graph_data(given_data):
             tmpy1.append(tmp[1])
     return tmpx1, tmpy1, tmpx2, tmpy2
 
-
-data = [[0.1, 1.1, 1], [6.8, 7.1, 1], [-3.5, -4.1, 1], [2.0, 2.7, 1], [4.1, 2.8, 1], [3.1, 5.0, 1], [-0.8, -1.3, 1],
-        [0.9, 1.2, 1], [5.0, 6.4, 1], [3.9, 4.0, 1], [7.1, 4.2, -1], [-1.4, -4.3, -1], [4.5, 0.0, -1], [6.3, 1.6, -1],
-        [4.2, 1.9, -1], [1.4, -3.2, -1], [2.4, -4.0, -1], [2.5, -6.1, -1], [8.4, 3.7, -1], [4.1, -2.2, -1]]
+data, n = crunch_data('table1_1.data', class_decider, float)
 
 x1, y1, x2, y2 = generate_graph_data(data)
-Algo = Perceptron([0, 0], 0)
+init_w = [0 for i in range(n)]
+Algo = Perceptron(init_w, 0)
 Algo.run(data)
-Algo.print_result()
+Algo.print_summary()
 
 # Plotting Graphs
 plt.figure(1)
