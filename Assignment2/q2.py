@@ -7,7 +7,6 @@ from random import shuffle
 import matplotlib.pyplot as plt
 import numpy as np
 
-
 cancerfile = 'breast-cancer-wisconsin.data'
 ionospherefile = 'ionosphere.data'
 
@@ -75,10 +74,11 @@ for epoch in epochs:
 
 # print(ionosphere_acc_normal, ionosphere_acc_voted)
 # print(cancer_acc_normal, cancer_acc_voted)
-
+plt.figure(1)
 plt.plot(epochs, ionosphere_acc_voted, 'blue', label='ionosphere voted_perceptron')
 plt.plot(epochs, ionosphere_acc_normal, 'brown', label='ionosphere perceptron')
-
+plt.legend()
+plt.figure(2)
 plt.plot(epochs, cancer_acc_voted, 'green', label='cancer voted_perceptron')
 plt.plot(epochs, cancer_acc_normal, 'red', label='cancer perceptron')
 plt.legend()

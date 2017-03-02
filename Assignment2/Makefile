@@ -1,3 +1,3 @@
 clean:
-	rm -r __pycache__
-	rm *.pyc
+	rm -r -f __pycache__
+	rm -f *.pyc
