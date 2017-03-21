@@ -1,5 +1,5 @@
 from random import shuffle
-
+from tabulate import tabulate
 from sklearn import svm
 import matplotlib.pyplot as plt
 import numpy as np
@@ -9,31 +9,31 @@ outputs = []
 START_LINE = 1
 
 
-def divide(data):
-    y = int(data[-1])
-    data = data[:-1]
+def divide(tmpdata):
+    y = int(tmpdata[-1])
+    tmpdata = tmpdata[:-1]
     x = []
-    for _ in range(len(data)):
-        x.append(float(data[_]))
+    for _ in range(len(tmpdata)):
+        x.append(float(tmpdata[_]))
     return x, y
 
 
 def process_data(filename):
     f = open(filename, 'r')
     lines = f.readlines()
-    data = []
+    data_tmp = []
     n = len(lines)
     for ind in range(START_LINE, n):
         tmp = lines[ind].strip(' \n').split(',')
         x_data, y_data = divide(tmp)
         x_data.append(y_data)
-        data.append(x_data)
-    return data
+        data_tmp.append(x_data)
+    return data_tmp
 
 
-def seperate_data(data):
-    label = data[-1]
-    features = data[:-1]
+def seperate_data(inp_data):
+    label = inp_data[-1]
+    features = inp_data[:-1]
     return features, label
 
 
@@ -50,7 +50,7 @@ def chunk_data(lst, n):
     return results
 
 
-def kfoldcv(data, fold, c, deg=None, gamma=None):
+def kfoldcv(input_data, fold, c, deg=None, gamma=None):
     corclass_poly = 0
     corclass_rbf = 0
     for curfold in range(fold):
@@ -58,10 +58,10 @@ def kfoldcv(data, fold, c, deg=None, gamma=None):
         training_outputs = []
         testing_inputs = []
         testing_outputs = []
-        for j in range(fold):
-            for inp in data[j]:
+        for tmpj in range(fold):
+            for inp in input_data[tmpj]:
                 x, y = seperate_data(inp)
-                if j != curfold:
+                if tmpj != curfold:
                     training_inputs.append(x)
                     training_outputs.append(y)
                 else:
@@ -71,12 +71,12 @@ def kfoldcv(data, fold, c, deg=None, gamma=None):
         classifier2 = svm.SVC(C=c, kernel='rbf', gamma=gamma)
         classifier1.fit(training_inputs, training_outputs)
         classifier2.fit(training_inputs, training_outputs)
-        for j in range(len(testing_inputs)):
-            res1 = classifier1.predict([testing_inputs[j]])
-            res2 = classifier2.predict([testing_inputs[j]])
-            if res1[0] == testing_outputs[j]:
+        for tmpj in range(len(testing_inputs)):
+            res1 = classifier1.predict([testing_inputs[tmpj]])
+            res2 = classifier2.predict([testing_inputs[tmpj]])
+            if res1[0] == testing_outputs[tmpj]:
                 corclass_poly += 1
-            if res2[0] == testing_outputs[j]:
+            if res2[0] == testing_outputs[tmpj]:
                 corclass_rbf += 1
     return corclass_poly, corclass_rbf
 
@@ -86,8 +86,7 @@ print("Processing Done...")
 degree_min = 2
 degree_max = 3
 C_min = 0.5
-sigma_min = 0.2
-sigma_max = 0.5
+sigma_min = 0.3
 num_iter = 3
 acc_poly = {}
 acc_rbf = {}
@@ -118,42 +117,57 @@ for _ in range(num_iter):
         rbf_sd /= 30
         poly_sd = round(poly_sd, 4)
         rbf_sd = round(rbf_sd, 4)
-        acc_poly[(C, degree)] = mean_poly
-        acc_rbf[(C, sigma)] = mean_rbf
-        sd_poly[(C, degree)] = poly_sd
-        sd_rbf[(C, sigma)] = rbf_sd
+        acc_poly[(degree, C)] = mean_poly
+        acc_rbf[(sigma, C)] = mean_rbf
+        sd_poly[(degree, C)] = poly_sd
+        sd_rbf[(sigma, C)] = rbf_sd
 best_poly = [0, 0]
 best_rbf = [0, 0]
 best_ac1 = 0
 best_ac2 = 0
-for i in acc_poly.keys():
+
+headers_poly = ['Degree', 'C', 'Accuracy', 'Standard Deviation']
+headers_rbf = ['Sigma', 'C', 'Accuracy', 'Standard Deviation']
+poly_table_data = []
+rbf_table_data = []
+data = sorted([(k[0], k[1], v) for k, v in acc_poly.items()])
+for i in sorted(acc_poly.keys()):
     if acc_poly[i] > best_ac1:
         best_poly[0] = i[0]
         best_poly[1] = i[1]
         best_ac1 = acc_poly[i]
-    print('C:', i[0], 'degree:', i[1], "accuracy:", acc_poly[i], "standard deviation:", sd_poly[i])
-for i in acc_rbf.keys():
+    poly_table_data.append((i[0], i[1], acc_poly[i], sd_poly[i]))
+
+for i in sorted(acc_rbf.keys()):
     if acc_rbf[i] > best_ac2:
         best_rbf[0] = i[0]
         best_rbf[1] = i[1]
         best_ac2 = acc_rbf[i]
-    print('C:', i[0], 'sigma:', i[1], "accuracy:", acc_rbf[i], "standard deviation:", sd_rbf[i])
+    rbf_table_data.append((i[0], i[1], acc_rbf[i], sd_rbf[i]))
+
+print(tabulate(poly_table_data, headers=headers_poly))
+print(tabulate(rbf_table_data, headers=headers_rbf))
+
 print("Our Best Choice")
 print(best_poly)
 print(best_rbf)
 
 final_input_data = []
 final_output_data = []
+
 for line in crude_data:
     X, Y = seperate_data(line)
     final_input_data.append(X)
     final_output_data.append(Y)
-clf1 = svm.SVC(C=best_poly[0], degree=best_poly[1], kernel='poly')
+
+clf1 = svm.SVC(C=best_poly[1], degree=best_poly[0], kernel='poly')
 clf1.fit(final_input_data, final_output_data)
-clf2 = svm.SVC(C=best_rbf[0], gamma=best_rbf[1], kernel='rbf')
+clf2 = svm.SVC(C=best_rbf[1], gamma=best_rbf[0], kernel='rbf')
 clf2.fit(final_input_data, final_output_data)
+
 x_max = x_min = final_input_data[0][0]
 y_max = y_min = final_input_data[0][1]
+
 for i in final_input_data:
     x_max = max(x_max, i[0])
     y_max = max(y_max, i[1])

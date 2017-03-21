@@ -32,7 +32,9 @@ weightskj = np.random.randn(output_size, hidden_size)
 
 
 def f(x):
-    """ Activation function """
+    """ Activation function 
+    :rtype: np.array
+    """
     return 1 / (1 + np.exp(-x))
 
 
@@ -45,8 +47,8 @@ def same_result(ycap, y):
 
 def process_data(filename, test):
     """ Process the data"""
-    f = open(filename, 'r')
-    lines = f.readlines()
+    file_reader = open(filename, 'r')
+    lines = file_reader.readlines()
     cur = START_LINE
     data_len = len(lines)
     while cur + INP_LEN < data_len:
@@ -68,11 +70,11 @@ def down_sample(data, test):
     number_of_boxes = int(INP_LEN / box_len)
     for i in range(number_of_boxes):
         for j in range(number_of_boxes):
-            sum = 0
+            cnt = 0
             for k in range(box_len):
                 for l in range(box_len):
-                    sum += int(data[box_len * i + k][box_len * j + l])
-            new_data.append(sum / 4.0)
+                    cnt += int(data[box_len * i + k][box_len * j + l])
+            new_data.append(cnt / 4.0)
     if test:
         test_inputs.append(new_data)
     else:
@@ -90,7 +92,7 @@ def predict(inp_data):
 
 
 def caluclate_sensitivities(inp_data, out_data):
-    """ Back Propogation Caluclate sensitivities"""
+    """ Back Propagation Calculate sensitivities"""
     X = np.zeros((input_size, 1))
     Tk = np.zeros((output_size, 1))
     for i in range(input_size):
