@@ -15,6 +15,8 @@ START_LINE = 21
 INP_LEN = 32
 inputs = []
 outputs = []
+test_inputs = []
+test_outputs = []
 
 eta = 0.01
 decay = 0.999
@@ -41,7 +43,7 @@ def same_result(ycap, y):
     return True
 
 
-def process_data(filename):
+def process_data(filename, test):
     """ Process the data"""
     f = open(filename, 'r')
     lines = f.readlines()
@@ -52,11 +54,14 @@ def process_data(filename):
         digit = int(lines[cur + INP_LEN])
         cur += INP_LEN + 1
         if digit in selected_chars:
-            outputs.append(actual_outputs[digit])
-            down_sample(data)
+            if test:
+                test_outputs.append(actual_outputs[digit])
+            else:
+                outputs.append(actual_outputs[digit])
+            down_sample(data, test)
 
 
-def down_sample(data):
+def down_sample(data, test):
     """ Reduce the size of the data """
     new_data = []
     box_len = 4
@@ -68,7 +73,10 @@ def down_sample(data):
                 for l in range(box_len):
                     sum += int(data[box_len * i + k][box_len * j + l])
             new_data.append(sum / 4.0)
-    inputs.append(new_data)
+    if test:
+        test_inputs.append(new_data)
+    else:
+        inputs.append(new_data)
 
 
 def predict(inp_data):
@@ -76,37 +84,33 @@ def predict(inp_data):
     inp = np.zeros((input_size, 1))
     for j in range(input_size):
         inp[j] = inp_data[j]
-    hidden_nodes = f(np.dot(weightsji, inp) + biasji)
-    output_nodes = f(np.dot(weightskj, hidden_nodes) + biaskj)
-    return output_nodes
+    Yj = f(np.dot(weightsji, inp) + biasji)
+    Zk = f(np.dot(weightskj, Yj) + biaskj)
+    return Zk
 
 
 def caluclate_sensitivities(inp_data, out_data):
     """ Back Propogation Caluclate sensitivities"""
-    inp = np.zeros((input_size, 1))
-    out = np.zeros((output_size, 1))
+    X = np.zeros((input_size, 1))
+    Tk = np.zeros((output_size, 1))
     for i in range(input_size):
-        inp[i] = inp_data[i]
+        X[i] = inp_data[i]
     for i in range(output_size):
-        out[i] = out_data[i]
-    hidden_nodes = f(np.dot(weightsji, inp) + biasji)
-    output_nodes = f(np.dot(weightskj, hidden_nodes) + biaskj)
-    dy = output_nodes - out
-    dy = output_nodes * (1 - output_nodes) * dy
-    dbiaskj = dy
-    dweightskj = np.dot(dy, hidden_nodes.T)
-    dh = np.dot(weightskj.T, dy)
-    dh_orig = dh * (1 - hidden_nodes) * hidden_nodes
-    dbiasji = dh_orig
-    dweightsji = np.dot(dh_orig, inp.T)
-    return dweightsji, dweightskj, dbiasji, dbiaskj
+        Tk[i] = out_data[i]
+    Yj = f(np.dot(weightsji, X) + biasji)
+    Zk = f(np.dot(weightskj, Yj) + biaskj)
+    delk = (Zk - Tk) * (Zk) * (1 - Zk)  # Derivative of sigmoid is y*(1-y)
+    deltakj = np.dot(delk, Yj.T)
+    delj = np.dot(weightskj.T, delk) * Yj * (1 - Yj)  # Senisitivities of hidden nodes
+    deltaji = np.dot(delj, X.T)
+    return deltaji, deltakj, delj, delk
 
 
 def train_iteration(data, out):
     global weightsji, weightskj, biasji, biaskj
-    dweightsji, dweightskj, dbiasji, dbiaskj = caluclate_sensitivities(data, out)
-    weightsji -= eta * dweightsji
-    weightskj -= eta * dweightskj
+    deltaji, deltakj, dbiasji, dbiaskj = caluclate_sensitivities(data, out)
+    weightsji -= eta * deltaji
+    weightskj -= eta * deltakj
     dbiasji -= eta * dbiasji
     dbiaskj -= eta * dbiaskj
 
@@ -124,21 +128,23 @@ def caluclate_final_accuracy(inp, out):
         res = predict(inp[i])
         ycap = []
         for j in range(len(out[i])):
-            if res[j] > 0.5:
+            if res[j] >= 0.5:
                 ycap.append(1)
             else:
                 ycap.append(0)
         if not same_result(ycap, out[i]):
             misclass += 1
-   # print(misclass)
     return (1 - misclass / len(inp)) * 100
 
 
-process_data('optdigits-orig.cv')
-train_nn()
-# print(np.round(weightskj, 6))
-# print(np.round(weightsji, 6))
-# print(biaskj)
-# print(biasji)
+process_data('optdigits-orig.tra', False)
+process_data('optdigits-orig.cv', True)
 
-print(hidden_size, caluclate_final_accuracy(inputs, outputs))
+train_nn()
+print("nH:", hidden_size)
+print("hidden-output weights:", np.round(weightskj, 6))
+print("input-hidden weights", np.round(weightsji, 2))
+print("hidden-output bias", biaskj)
+print("input-hidden bias", biasji)
+
+print("Accuracy:", caluclate_final_accuracy(test_inputs, test_outputs))
