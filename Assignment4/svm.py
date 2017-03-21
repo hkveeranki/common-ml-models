@@ -91,6 +91,8 @@ sigma_max = 0.5
 num_iter = 3
 acc_poly = {}
 acc_rbf = {}
+sd_poly = {}
+sd_rbf = {}
 print('Running 10 Fold Validation')
 for _ in range(num_iter):
     C = C_min + _ * 0.5
@@ -105,8 +107,21 @@ for _ in range(num_iter):
             poly_cor, rbf_cor = kfoldcv(chunks, 10, 1.0, degree, sigma)
             poly_accuracies.append((poly_cor / len(crude_data)) * 100)
             rbf_accuracies.append((rbf_cor / len(crude_data)) * 100)
-        acc_poly[(C, degree)] = round(sum(poly_accuracies) / 30, 3)
-        acc_rbf[(C, sigma)] = round(sum(rbf_accuracies) / 30, 3)
+
+        mean_poly = round(sum(poly_accuracies) / 30, 3)
+        mean_rbf = round(sum(rbf_accuracies) / 30, 3)
+        poly_sd = rbf_sd = 0
+        for j in range(30):
+            poly_sd += (poly_accuracies[i] - mean_poly) ** 2
+            rbf_sd += (rbf_accuracies[i] - mean_rbf) ** 2
+        poly_sd /= 30
+        rbf_sd /= 30
+        poly_sd = round(poly_sd, 4)
+        rbf_sd = round(rbf_sd, 4)
+        acc_poly[(C, degree)] = mean_poly
+        acc_rbf[(C, sigma)] = mean_rbf
+        sd_poly[(C, degree)] = poly_sd
+        sd_rbf[(C, sigma)] = rbf_sd
 best_poly = [0, 0]
 best_rbf = [0, 0]
 best_ac1 = 0
@@ -116,13 +131,13 @@ for i in acc_poly.keys():
         best_poly[0] = i[0]
         best_poly[1] = i[1]
         best_ac1 = acc_poly[i]
-    print('C:', i[0], 'degree:', i[1], "accuracy:", acc_poly[i])
+    print('C:', i[0], 'degree:', i[1], "accuracy:", acc_poly[i], "standard deviation:", sd_poly[i])
 for i in acc_rbf.keys():
     if acc_rbf[i] > best_ac2:
         best_rbf[0] = i[0]
         best_rbf[1] = i[1]
         best_ac2 = acc_rbf[i]
-    print('C:', i[0], 'sigma:', i[1], "accuracy:", acc_rbf[i])
+    print('C:', i[0], 'sigma:', i[1], "accuracy:", acc_rbf[i], "standard deviation:", sd_rbf[i])
 print("Our Best Choice")
 print(best_poly)
 print(best_rbf)
@@ -186,4 +201,3 @@ plt.yticks(())
 plt.axis([-1, 1, -1, 1])
 
 plt.show()
-
