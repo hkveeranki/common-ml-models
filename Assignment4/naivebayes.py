@@ -1,7 +1,7 @@
 from numpy import log
 from random import shuffle
 
-EXCLUDE = [0, 5, 16, 17, 18, 24]
+EXCLUDE = [0, 5, 16, 17, 18, 24, 39]
 
 
 def format_string(data_string):
@@ -12,48 +12,49 @@ def give_needed(data):
     needed = []
     data = format_string(data)
     data = data.split(',')
-    for i in range(len(data)):
-        if i not in EXCLUDE:
-            needed.append(format_string(data[i]))
+    for _ in range(len(data)):
+        if _ not in EXCLUDE:
+            needed.append(format_string(data[_]))
     return needed
 
 
 def process_data(filename):
     f = open(filename, 'r')
     lines = f.readlines()
-    for i in range(len(lines)):
-        lines[i] = format_string(lines[i])
+    for index in range(len(lines)):
+        lines[index] = format_string(lines[index])
+    f.close()
     return lines
 
 
 def train_classifier(raw_data):
     attr_len = len(give_needed(raw_data[0])) - 1
-    counts = [{} for i in range(attr_len)]
+    counts = [{} for _ in range(attr_len)]
     prob_Y = [0, 0]
     n = len(raw_data)
-    for i in range(len(raw_data)):
-        final_data = give_needed(raw_data[i])
+    for ind in range(len(raw_data)):
+        final_data = give_needed(raw_data[ind])
         Y = final_data[-1]
         if Y == '- 50000.':
             prob_Y[0] += 1
         else:
             prob_Y[1] += 1
-        for j in range(len(final_data) - 1):
-            attrib = final_data[j]
-            if attrib == '?' and len(counts[j]) != 0:
-                attrib = max(counts[j], key=counts[j].get)
-            if attrib not in counts[j]:
-                counts[j][attrib] = [0, 0]
+        for Xi in range(len(final_data) - 1):
+            attrib = final_data[Xi]
+            if attrib == '?' and len(counts[Xi]) != 0:
+                attrib = max(counts[Xi], key=counts[Xi].get)
+            if attrib not in counts[Xi]:
+                counts[Xi][attrib] = [0, 0]
             if Y == '- 50000.':
-                counts[j][attrib][0] += 1
+                counts[Xi][attrib][0] += 1
 
             else:
-                counts[j][attrib][1] += 1
+                counts[Xi][attrib][1] += 1
     # print('Done')
     # print('Caluclating Probabilities')
     div = log(n)
-    for j in range(attr_len):
-        cnts = counts[j]
+    for Xi in range(attr_len):
+        cnts = counts[Xi]
         for key in cnts.keys():
             cnts[key][0] = log(cnts[key][0]) - div
             cnts[key][1] = log(cnts[key][1]) - div
@@ -75,14 +76,14 @@ def chunk_data(lst, n):
     return results
 
 
-def get_label(inp, class_conditional, Y_prob):
-    c0 = 0
-    c1 = 0
+def get_label(inp, class_conditional, class_prob):
+    c0 = class_prob[0]
+    c1 = class_prob[1]
     label = 0
-    for j in range(len(class_conditional)):
-        attrib = inp[j]
-        dist = class_conditional[j]
-        if attrib == '?':
+    for Xj in range(len(class_conditional)):
+        attrib = inp[Xj]
+        dist = class_conditional[Xj]
+        if attrib == '?' or attrib not in dist.keys():
             maxp = -1000000
             mode = 0
             for key in dist.keys():
@@ -98,7 +99,7 @@ def get_label(inp, class_conditional, Y_prob):
     return label
 
 
-def kfoldcv(input_data, fold, total):
+def kfoldcv(input_data, fold, num_data_points):
     labels = ['- 50000.', '50000+.']
     corclass = 0
     for curfold in range(fold):
@@ -114,8 +115,8 @@ def kfoldcv(input_data, fold, total):
                     testing_inputs.append(inp)
         conditional_probs, class_probs = train_classifier(testing_inputs)
         # print('Done.\nTesting')
-        for j in testing_inputs:
-            final_data = give_needed(j)
+        for test_j in testing_inputs:
+            final_data = give_needed(test_j)
             Y = final_data[-1]
             Ycap = get_label(final_data, conditional_probs, class_probs)
             if labels[Ycap] == Y:
@@ -123,7 +124,7 @@ def kfoldcv(input_data, fold, total):
                 if Ycap == 1:
                     print('Hola')
                     # print(curfold, 'Done')
-    return (corclass / total) * 100
+    return (corclass / num_data_points) * 100
 
 
 print("Reading data...")
@@ -132,14 +133,16 @@ total = len(crude_data)
 accuracies = []
 data_chunks = []
 print('Running 10 Fold CV...')
-for i in range(1):
+for i in range(30):
     shuffle(crude_data)
     data_chunks = chunk_data(crude_data, 10)
     acc = kfoldcv(data_chunks, 10, total)
     accuracies.append(round(acc, 4))
     print(i, 'Done')
 mean_acc = sum(accuracies) / len(accuracies)
+mean_acc = round(mean_acc, 4)
 sd_acc = 0
 for j in accuracies:
     sd_acc += (j - mean_acc) ** 2
+    sd_acc = round(sd_acc, 4)
 print('Done.\n Mean Accuracy is ', mean_acc, 'Standard deviation is ', sd_acc)
