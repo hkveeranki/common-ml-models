@@ -2,6 +2,8 @@ from numpy import log
 from random import shuffle
 
 EXCLUDE = [0, 5, 16, 17, 18, 24, 39]
+INIT_PROB = 0.00000000000001
+DEBUG = 0
 
 
 def format_string(data_string):
@@ -44,22 +46,21 @@ def train_classifier(raw_data):
             if attrib == '?' and len(counts[Xi]) != 0:
                 attrib = max(counts[Xi], key=counts[Xi].get)
             if attrib not in counts[Xi]:
-                counts[Xi][attrib] = [0, 0]
+                counts[Xi][attrib] = [INIT_PROB, INIT_PROB]
             if Y == '- 50000.':
                 counts[Xi][attrib][0] += 1
 
             else:
                 counts[Xi][attrib][1] += 1
-    # print('Done')
-    # print('Caluclating Probabilities')
     div = log(n)
+    prob_Y[0] = log(prob_Y[0]) - div
+    prob_Y[1] = log(prob_Y[1]) - div
     for Xi in range(attr_len):
         cnts = counts[Xi]
         for key in cnts.keys():
-            cnts[key][0] = log(cnts[key][0]) - div
-            cnts[key][1] = log(cnts[key][1]) - div
-    prob_Y[0] = log(prob_Y[0]) - div
-    prob_Y[1] = log(prob_Y[1]) - div
+            cnts[key][0] = log(cnts[key][0]) - div - prob_Y[0]
+            cnts[key][1] = log(cnts[key][1]) - div - prob_Y[1]
+
     return counts, prob_Y
 
 
@@ -100,11 +101,8 @@ def get_label(inp, class_conditional, class_prob):
 
 
 def kfoldcv(input_data, fold, num_data_points):
-    labels = ['- 50000.', '50000+.']
-    corclass = 0
+    acc = 0
     for curfold in range(fold):
-        # print(curfold, 'begin')
-        # print('Generating Classifier')
         training_inputs = []
         testing_inputs = []
         for tmpj in range(fold):
@@ -113,17 +111,28 @@ def kfoldcv(input_data, fold, num_data_points):
                     training_inputs.append(inp)
                 else:
                     testing_inputs.append(inp)
-        conditional_probs, class_probs = train_classifier(testing_inputs)
-        # print('Done.\nTesting')
-        for test_j in testing_inputs:
-            final_data = give_needed(test_j)
-            Y = final_data[-1]
-            Ycap = get_label(final_data, conditional_probs, class_probs)
-            if labels[Ycap] == Y:
-                corclass += 1
-                if Ycap == 1:
-                    print('Hola')
-                    # print(curfold, 'Done')
+
+        acc += test_classifier(training_inputs, testing_inputs)
+    return acc / fold
+
+
+def test_classifier(training_inputs, testing_inputs):
+    labels = ['- 50000.', '50000+.']
+    corclass = 0
+    num_data_points = len(testing_inputs)
+    if DEBUG == 1:
+        print('Training...')
+    conditional_probs, class_probs = train_classifier(training_inputs)
+    if DEBUG == 1:
+        print('Done...\n Testing')
+    for test_j in testing_inputs:
+        final_data = give_needed(test_j)
+        Y = final_data[-1]
+        Ycap = get_label(final_data, conditional_probs, class_probs)
+        if labels[Ycap] == Y:
+            corclass += 1
+    if DEBUG == 1:
+        print('Done.')
     return (corclass / num_data_points) * 100
 
 
@@ -132,17 +141,20 @@ crude_data = process_data('census-income.data')
 total = len(crude_data)
 accuracies = []
 data_chunks = []
-print('Running 10 Fold CV...')
+# Testing part with provided test data
+# test_data = process_data('census-income.test')
+# print('Done.\nTesting Accuracy:', test_classifier(crude_data, test_data))
+
+print('Done.\nRunning 10 Fold CV...')
 for i in range(30):
     shuffle(crude_data)
     data_chunks = chunk_data(crude_data, 10)
     acc = kfoldcv(data_chunks, 10, total)
     accuracies.append(round(acc, 4))
-    print(i, 'Done')
+    print(i, 'Done acc:', acc)
 mean_acc = sum(accuracies) / len(accuracies)
-mean_acc = round(mean_acc, 4)
+mean_acc = round(mean_acc, 6)
 sd_acc = 0
 for j in accuracies:
-    sd_acc += (j - mean_acc) ** 2
-    sd_acc = round(sd_acc, 4)
+    sd_acc += round((j - mean_acc) ** 2, 6)
 print('Done.\n Mean Accuracy is ', mean_acc, 'Standard deviation is ', sd_acc)
