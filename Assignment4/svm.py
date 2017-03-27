@@ -10,6 +10,7 @@ START_LINE = 1
 
 
 def divide(tmpdata):
+    """ Divide the data into classes and attributes and convert into float"""
     y = int(tmpdata[-1])
     tmpdata = tmpdata[:-1]
     x = []
@@ -19,6 +20,7 @@ def divide(tmpdata):
 
 
 def process_data(filename):
+    """ Process the data from the file"""
     f = open(filename, 'r')
     lines = f.readlines()
     data_tmp = []
@@ -32,12 +34,14 @@ def process_data(filename):
 
 
 def seperate_data(inp_data):
+    """ Seperate the list into Class label and attributes"""
     label = inp_data[-1]
     features = inp_data[:-1]
     return features, label
 
 
 def chunk_data(lst, n):
+    """ Prepare chunks of data"""
     increment = len(lst) / float(n)
     last = 0
     index = 1
@@ -51,6 +55,7 @@ def chunk_data(lst, n):
 
 
 def kfoldcv(input_data, fold, c, deg=None, gamma=None):
+    """ Run the K fold CV"""
     corclass_poly = 0
     corclass_rbf = 0
     for curfold in range(fold):

@@ -2,7 +2,7 @@ from numpy import log
 from random import shuffle
 
 EXCLUDE = [0, 5, 16, 17, 18, 24, 39]
-INIT_PROB = 0.00000000000001
+INIT_CNT = 0.00000000000001  # to avoid division by zero error
 DEBUG = 0
 
 
@@ -11,6 +11,7 @@ def format_string(data_string):
 
 
 def give_needed(data):
+    """ Only extract needed attributes and returns a list"""
     needed = []
     data = format_string(data)
     data = data.split(',')
@@ -21,6 +22,7 @@ def give_needed(data):
 
 
 def process_data(filename):
+    """ Process the data from the file"""
     f = open(filename, 'r')
     lines = f.readlines()
     for index in range(len(lines)):
@@ -30,6 +32,7 @@ def process_data(filename):
 
 
 def train_classifier(raw_data):
+    """ Train the classifier from the given crude_data"""
     attr_len = len(give_needed(raw_data[0])) - 1
     counts = [{} for _ in range(attr_len)]
     prob_Y = [0, 0]
@@ -46,7 +49,7 @@ def train_classifier(raw_data):
             if attrib == '?' and len(counts[Xi]) != 0:
                 attrib = max(counts[Xi], key=counts[Xi].get)
             if attrib not in counts[Xi]:
-                counts[Xi][attrib] = [INIT_PROB, INIT_PROB]
+                counts[Xi][attrib] = [INIT_CNT, INIT_CNT]
             if Y == '- 50000.':
                 counts[Xi][attrib][0] += 1
 
@@ -65,6 +68,7 @@ def train_classifier(raw_data):
 
 
 def chunk_data(lst, n):
+    """ Chunk the data into lists to k fold cv"""
     increment = len(lst) / float(n)
     last = 0
     index = 1
@@ -78,6 +82,7 @@ def chunk_data(lst, n):
 
 
 def get_label(inp, class_conditional, class_prob):
+    """ Predict the label from the given prior probabilites and class conditional densities"""
     c0 = class_prob[0]
     c1 = class_prob[1]
     label = 0
@@ -100,8 +105,9 @@ def get_label(inp, class_conditional, class_prob):
     return label
 
 
-def kfoldcv(input_data, fold, num_data_points):
-    acc = 0
+def kfoldcv(input_data, fold):
+    """ Run the the Kfold cross validation"""
+    accur = 0
     for curfold in range(fold):
         training_inputs = []
         testing_inputs = []
@@ -112,8 +118,8 @@ def kfoldcv(input_data, fold, num_data_points):
                 else:
                     testing_inputs.append(inp)
 
-        acc += test_classifier(training_inputs, testing_inputs)
-    return acc / fold
+        accur += test_classifier(training_inputs, testing_inputs)
+    return accur / fold
 
 
 def test_classifier(training_inputs, testing_inputs):
@@ -138,7 +144,6 @@ def test_classifier(training_inputs, testing_inputs):
 
 print("Reading data...")
 crude_data = process_data('census-income.data')
-total = len(crude_data)
 accuracies = []
 data_chunks = []
 # Testing part with provided test data
@@ -149,7 +154,7 @@ print('Done.\nRunning 10 Fold CV...')
 for i in range(30):
     shuffle(crude_data)
     data_chunks = chunk_data(crude_data, 10)
-    acc = kfoldcv(data_chunks, 10, total)
+    acc = kfoldcv(data_chunks, 10)
     accuracies.append(round(acc, 4))
     print(i, 'Done acc:', acc)
 mean_acc = sum(accuracies) / len(accuracies)
