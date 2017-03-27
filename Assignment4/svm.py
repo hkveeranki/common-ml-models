@@ -136,17 +136,24 @@ for i in sorted(acc_poly.keys()):
         best_poly[0] = i[0]
         best_poly[1] = i[1]
         best_ac1 = acc_poly[i]
-    poly_table_data.append((i[0], i[1], acc_poly[i], sd_poly[i]))
+    poly_table_data.append((str(i[0]), str(i[1]), str(acc_poly[i]), str(sd_poly[i])))
 
 for i in sorted(acc_rbf.keys()):
     if acc_rbf[i] > best_ac2:
         best_rbf[0] = i[0]
         best_rbf[1] = i[1]
         best_ac2 = acc_rbf[i]
-    rbf_table_data.append((i[0], i[1], acc_rbf[i], sd_rbf[i]))
+    rbf_table_data.append((str(i[0]), str(i[1]), str(acc_rbf[i]), str(sd_rbf[i])))
 
-print(tabulate(poly_table_data, headers=headers_poly))
-print(tabulate(rbf_table_data, headers=headers_rbf))
+print(','.join(headers_poly))
+for j in range(len(poly_table_data)):
+    print(','.join(poly_table_data[j]))
+print(','.join(headers_rbf))
+for j in range(len(rbf_table_data)):
+    print(','.join(rbf_table_data[j]))
+
+# print(tabulate(poly_table_data, headers=headers_poly,))
+# print(tabulate(rbf_table_data, headers=headers_rbf))
 
 print("Our Best Choice")
 print(best_poly)
@@ -154,11 +161,21 @@ print(best_rbf)
 
 final_input_data = []
 final_output_data = []
+plot_data_x = []
+plot_data_y = []
 
 for line in crude_data:
     X, Y = seperate_data(line)
     final_input_data.append(X)
+    plot_data_x.append(X[0])
+    plot_data_y.append(X[1])
     final_output_data.append(Y)
+
+# Data
+
+plt.figure(3)
+plt.title('Data Plot')
+plt.scatter(plot_data_x, plot_data_y, c=final_output_data)
 
 clf1 = svm.SVC(C=best_poly[1], degree=best_poly[0], kernel='poly')
 clf1.fit(final_input_data, final_output_data)

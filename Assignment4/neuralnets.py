@@ -18,6 +18,8 @@ outputs = []
 test_inputs = []
 test_outputs = []
 
+final_needed = {}
+
 eta = 0.01
 decay = 0.999
 input_size = 64
@@ -150,3 +152,12 @@ print("hidden-output bias", biaskj)
 print("input-hidden bias", biasji)
 
 print("Accuracy:", caluclate_final_accuracy(test_inputs, test_outputs))
+for j in actual_outputs.keys():
+    for i in range(len(inputs)):
+        if outputs[i] == actual_outputs[j]:
+            Yj = np.round(f(np.dot(weightsji, inputs[i]) + biasji), 3)
+            Zk = np.round(f(np.dot(weightskj, Yj) + biaskj), 3)
+            print('For ', j)
+            print("Intermediate Outputs", Yj)
+            print("Final Outputs", Zk)
+            break
