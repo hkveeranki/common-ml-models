@@ -12,6 +12,6 @@ class ReLU(ActivationFunction):
         return net * (net > 0)
 
     def derivative(self, output):
-        if output < 0:
-            return 0
-        return 1
+        output[output<=0] = 0
+        output[output>0] = 1
+        return output

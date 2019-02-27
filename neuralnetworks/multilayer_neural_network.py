@@ -1,11 +1,9 @@
 import sys
 import time
+import random
+import numpy as np
 
 from .layer import Layer
-
-
-def get_error(actual, expected):
-    return sum([(expected[i] - actual[i]) ** 2 for i in range(len(expected))])
 
 
 class MultiLayerNeuralNetwork:
@@ -30,7 +28,7 @@ class MultiLayerNeuralNetwork:
             num_weights = self.input_length
         else:
             num_weights = self.__last_added_layer_size
-        layer.make_nodes(num_weights)
+        layer.make_weights(num_weights)
         self.network.append(layer)
         self.__last_added_layer_size = layer.size
         self.__num_layers += 1
@@ -46,9 +44,11 @@ class MultiLayerNeuralNetwork:
         self.add(output_layer)
         self.__compiled = True
 
-    def train(self, x_train, y_train, n_epochs, eta):
+    def train(self, x_train, y_train, x_val, y_val, n_epochs, eta,
+              batch_size=64):
         """
         Train the neural network for given number of epochs using given data.
+        :param batch_size: batch size to be used
         :param x_train: training sample data
         :param y_train: training label data
         :param n_epochs: number of epochs
@@ -64,98 +64,106 @@ class MultiLayerNeuralNetwork:
                  "is %d and the size of given training sample is %d\n" % (
                      self.input_length, sample_length)))
             sys.exit(-1)
-
+        num_samples = len(x_train)
         for epoch in range(n_epochs):
             t = time.time()
-            self.train_iteration(x_train, y_train, eta)
+            err = self.train_iteration(x_train, y_train, eta, batch_size)
             sys.stderr.write(
-                "iteration %d took %.3f seconds\n" % (epoch, time.time() - t))
+                "iteration %d took %.3f seconds and total_loss = %.3f\n" % (
+                    epoch, time.time() - t, err / num_samples))
+            print(self.accuracy(x_test=x_val, y_test=y_val))
 
-    def train_iteration(self, x_train, y_train, eta):
+    def train_iteration(self, x_train, y_train, eta, batch_size):
         """
         Perform an iteration of training on the neural network.
+        :param batch_size: batch_size to be used
         :param x_train: training samples
         :param y_train: training labels
         :param eta: learning rate
         """
+
+        def calculate_loss(actual, expected):
+            return sum(
+                [(expected[i] - actual[i]) ** 2 for i in range(len(expected))])
+
         total_error = 0
-        t = time.time()
         num_samples = len(x_train)
         sys.stderr.write("Number of training samples is %d\n" % num_samples)
-        for i in range(num_samples):
-            # print("using sample", i)
-            sample = x_train[i]
-            label = y_train[i]
-            predicted = self.feed_forward(sample)
-            total_error += get_error(label, predicted)
-            self.back_propagate(label)
-            self.update(sample, eta)
-            if i % 100 == 0:
-                nth = i // 100
-                print("%d00 - %d00 samples took %.3f seconds" %
-                      (nth, nth + 1, time.time() - t))
-                t = time.time()
-            # print("Done.")
+        num_iter = num_samples // batch_size
+        for b in range(num_iter):
+            t = time.time()
+            for _ in range(batch_size):
+                i = random.randint(0, num_samples - 1)
+                sample = x_train[i].reshape(x_train[i].size, 1)
+                label = y_train[i]
+                label = label.reshape(label.size, 1)
+                predicted = self.feed_forward(sample)
+                total_error += calculate_loss(label, predicted)
+                self.back_propagate(label, sample)
+            self.update(eta=eta)
+            print("batch %d of %d samples took %.3f seconds with loss %.3f" %
+                  (b, batch_size, time.time() - t, total_error / num_samples))
+        self.print_weights()
+        return total_error
 
     def feed_forward(self, sample):
         """
-        Perform the feed forward operation in a neural network
+        Perform the feed forward operation in the neural network.
         :param sample: the input to the neural network
         :return: output from the neural network
         """
-        inputs = sample
-        for i in range(self.__num_layers):
+        outputs = self.network[0].get_output(sample)
+        for layer in self.network:
             # outputs of this layer are input to next layer
-            inputs = self.network[i].get_output(inputs=inputs)
-        return inputs
+            outputs = layer.get_output(inputs=outputs)
+        return np.array(outputs)
 
-    def back_propagate(self, expected):
+    def back_propagate(self, expected, sample):
         """
         Run the back propagation through the neural network. The formula for
-        back propagation is given by the following equation.
-        error_n = delta_n * derivative(actual)
+        back propagation is given by the following equation
+        error_n = delta_n * derivative(output)
         actual is the actual output for the given sample.
-        For last layer delta is (actual - expected)
+        For last layer delta = (actual - expected)
         other wise delta_k for a node k is sum(weight_k * error_j) for all j
         where error_j is error from jth neuron in the next layer and weight_k is
         weight that connects kth neuron of current layer to the jth neuron.
         :param expected: the actual label of the sample.
+        :param sample: input used in the iteration.
         """
-        for i in range(self.__num_layers - 1, 0, -1):
-            layer = self.network[i]
-            if i == self.__num_layers - 1:
-                # get the error from the expected
-                err = layer.get_error_from_expected(expected)
-            else:
-                # get error from the layer i+1
-                err = layer.get_error_from_layer(layer=self.network[i + 1])
-            # update delta of the neurons from the layer
-            layer.update_delta(err)
+        delta = self.network[-1].get_delta_from_expected(expected)
+        self.network[-1].update_error(deltas=delta,
+                                      inputs=self.network[-2].get_output())
 
-    def update(self, sample, eta):
+        for i in range(self.__num_layers - 2, 0, -1):
+            layer = self.network[i]
+            # get error from the layer i+1
+            err = self.network[i + 1].get_delta_from_layer()
+            # update delta of the neurons from the layer
+            layer.update_error(deltas=err,
+                               inputs=self.network[i - 1].get_output())
+
+        err = self.network[1].get_delta_from_layer()
+        self.network[0].update_error(deltas=err, inputs=sample)
+
+    def update(self, eta):
         """
         Update weights of the neural network.
         :param sample: the input sample used in the iteration
         :param eta: learning rate
         """
         for i in range(self.__num_layers):
-            if i == 0:
-                # input is the sample itself
-                inputs = sample
-            else:
-                # input is the output of the previous layer
-                inputs = self.network[i - 1].get_output()
-            # Apply it for each neuron in the layer
-            self.network[i].update_node_weights(eta=eta, inputs=inputs)
+            self.network[i].update_weights(eta=eta)
 
-    def predict(self, sample):
+    def predict_label(self, sample):
         """
         Predict the label for a sample
         :param sample: sample vector
         :return: predicted label
         """
         outputs = self.feed_forward(sample)
-        return outputs.index(max(outputs))
+        # print(outputs)
+        return np.argmax(outputs)
 
     def save_weights(self, save_path):
         """
@@ -178,8 +186,20 @@ class MultiLayerNeuralNetwork:
     def accuracy(self, x_test, y_test):
         acc = 0.0
         num_samples = len(x_test)
+        preds = set()
         for i in range(num_samples):
-            y_pred = self.predict(x_test[i])
-            if y_pred == y_test[i]:
+            actual = np.argmax(y_test[i])
+            y_pred = self.predict_label(x_test[i][:, None])
+            preds.add(y_pred)
+            if y_pred == actual:
                 acc += 1
+        print('Predicted', preds)
         return acc / num_samples
+
+    def print_weights(self):
+        itr = 0
+        for layer in self.network:
+            print('---------------- Layer', itr + 1, ' -----------------')
+            layer.print_weights()
+            print('---------------- Done -------------------')
+            itr += 1

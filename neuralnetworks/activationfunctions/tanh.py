@@ -1,6 +1,5 @@
 from .activation_function import ActivationFunction
-from numpy import exp
-
+import numpy as np
 
 class TanH(ActivationFunction, object):
     """
@@ -10,7 +9,7 @@ class TanH(ActivationFunction, object):
     """
 
     def forward(self, net):
-        return (exp(net) - exp(-net)) / (exp(net) + exp(-net))
+        return np.tanh(net)
 
     def derivative(self, output):
         return 1 - (output * output)
