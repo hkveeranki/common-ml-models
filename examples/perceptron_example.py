@@ -24,7 +24,7 @@ def generate_graph_data(given_data):
     return tmpx1, tmpy1, tmpx2, tmpy2
 
 
-data, n = crunch_data('table1_2.data', class_decider, float)
+data, n = crunch_data('perceptron_example_data.data', class_decider, float)
 x1, y1, x2, y2 = generate_graph_data(data)
 init_w = [0 for i in range(n)]
 Algo = Perceptron(init_w, 0)

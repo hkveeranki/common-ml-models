@@ -7,8 +7,8 @@ from random import shuffle
 import matplotlib.pyplot as plt
 import numpy as np
 
-cancerfile = 'breast-cancer-wisconsin.data'
-ionospherefile = 'ionosphere.data'
+cancerfile = 'voted_perceptron_example_data_1.data'
+ionospherefile = 'voted_perceptron_example_data2.data'
 
 
 def cancer_decider(attr):
@@ -60,7 +60,6 @@ cancer_acc_normal = []
 ionosphere_acc_normal = []
 
 for epoch in epochs:
-    correct = kfoldcv(cancer_chunks, 10, cancer_w, epoch)
     cancer_acc_voted.append(float(correct[0]) / len(cancer_data))
     cancer_acc_normal.append(float(correct[1]) / len(cancer_data))
     cancer_acc_voted[-1] *= 100

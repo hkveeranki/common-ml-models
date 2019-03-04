@@ -141,8 +141,8 @@ def caluclate_final_accuracy(inp, out):
     return (1 - misclass / len(inp)) * 100
 
 
-process_data('optdigits-orig.tra', False)
-process_data('optdigits-orig.cv', True)
+process_data('neural_network_example_train.data', False)
+process_data('neural_network_example_test.data', True)
 
 train_nn()
 print("nH:", hidden_size)

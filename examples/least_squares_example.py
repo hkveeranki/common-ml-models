@@ -24,7 +24,7 @@ def class_divider(tmpdata):
     return class1, class2
 
 
-data, n = crunch_data('table3.data', class_decider, float)
+data, n = crunch_data('least_squares_example.data', class_decider, float)
 data1, data2 = class_divider(data)
 Algo = Fisher()
 
