@@ -1,5 +1,5 @@
-from utilities import dot_product, make_data
-from votedPerceptron import votedPerceptron
+from .utilities import dot_product, make_data
+from .voted_perceptron import VotedPerceptron
 
 
 def sign(val):
@@ -19,7 +19,7 @@ def get_value(classifiers, votes, data):
 
 def validate_set(training_data, testing_data, w_init, epochs):
     """ Runs the verification for training set and testing set"""
-    Algo = votedPerceptron(w_init, 0, epochs)
+    Algo = VotedPerceptron(w_init, 0, epochs)
     Algo.run_voted(training_data)
     classifiers = Algo.weights
     votes = Algo.votes

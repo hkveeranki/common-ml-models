@@ -2,7 +2,7 @@
 This file contains the algorithm for perceptron
 """
 
-from utilities import dot_product, make_data, update_w
+from .utilities import dot_product, make_data, update_w
 
 
 class Perceptron:

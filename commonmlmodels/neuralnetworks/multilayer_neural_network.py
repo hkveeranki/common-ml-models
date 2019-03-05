@@ -45,7 +45,7 @@ class MultiLayerNeuralNetwork:
         self.__compiled = True
 
     def train(self, x_train, y_train, x_val=None, y_val=None, n_epochs=100,
-              eta=0.001, batch_size=64):
+              eta=0.0001, batch_size=64, debug=False):
         """
         Train the neural network for given number of epochs using given data.
         :param y_val: Validation data samples
@@ -55,36 +55,43 @@ class MultiLayerNeuralNetwork:
         :param y_train: training label data
         :param n_epochs: number of epochs
         :param eta: learning rate
+        :param debug: Whether to print debug info to stderr
         """
         if not self.__compiled:
             sys.stderr.write(
                 "Please compile the network before calling train.\n")
-        sample_length = len(x_train[0])
-        if not x_val or not y_val:
-            x_val, y_val = x_train, y_train
+            sys.exit(-1)
 
+        sample_length = len(x_train[0])
         if self.input_length != sample_length:
             sys.stderr.write(
                 ("Invalid training sample. input length for the neural network "
                  "is %d and the size of given training sample is %d\n" % (
                      self.input_length, sample_length)))
             sys.exit(-1)
+
+        if not x_val or not y_val:
+            x_val, y_val = x_train, y_train
+
         num_samples = len(x_train)
         for epoch in range(n_epochs):
             t = time.time()
             err = self.train_iteration(x_train, y_train, eta, batch_size)
-            sys.stderr.write(
-                "iteration %d took %.3f seconds and total_loss = %.3f\n" % (
-                    epoch, time.time() - t, err / num_samples))
-            print(self.accuracy(x_test=x_val, y_test=y_val))
+            if debug:
+                sys.stderr.write(
+                    "iteration %d took %.3f seconds and total_loss = %.3f\n" % (
+                        epoch, time.time() - t, err / num_samples))
+            if debug:
+                print(self.accuracy(x_test=x_val, y_test=y_val))
 
-    def train_iteration(self, x_train, y_train, eta, batch_size):
+    def train_iteration(self, x_train, y_train, eta, batch_size, debug=False):
         """
         Perform an iteration of training on the neural network.
-        :param batch_size: batch_size to be used
         :param x_train: training samples
         :param y_train: training labels
         :param eta: learning rate
+        :param batch_size: batch_size to be used
+        :param debug: Whether to print debug info to stderr
         """
 
         def calculate_loss(actual, expected):
@@ -93,7 +100,8 @@ class MultiLayerNeuralNetwork:
 
         total_error = 0
         num_samples = len(x_train)
-        sys.stderr.write("Number of training samples is %d\n" % num_samples)
+        if debug:
+            sys.stderr.write("Number of training samples is %d\n" % num_samples)
         num_iter = num_samples // batch_size
         for b in range(num_iter):
             t = time.time()
@@ -106,9 +114,12 @@ class MultiLayerNeuralNetwork:
                 total_error += calculate_loss(label, predicted)
                 self.back_propagate(label, sample)
             self.update(eta=eta)
-            print("batch %d of %d samples took %.3f seconds with loss %.3f" %
-                  (b, batch_size, time.time() - t, total_error / num_samples))
-        self.print_weights()
+            if debug:
+                print(
+                    "batch %d of %d samples took %.3f seconds with loss %.3f" %
+                    (b, batch_size, time.time() - t, total_error / num_samples))
+        if debug:
+            self.print_weights()
         return total_error
 
     def feed_forward(self, sample):
@@ -198,7 +209,6 @@ class MultiLayerNeuralNetwork:
             preds.add(y_pred)
             if y_pred == actual:
                 acc += 1
-        print('Predicted', preds)
         return acc / num_samples
 
     def print_weights(self):

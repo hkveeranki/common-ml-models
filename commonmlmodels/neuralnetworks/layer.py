@@ -17,6 +17,7 @@ class Layer:
             sys.stderr.write((
                 'activation function should implement'
                 ' base class ActivationFunction'))
+            sys.exit(-1)
         self.activation_function = activation_function
         self.__weights = None
         self.__bias = None

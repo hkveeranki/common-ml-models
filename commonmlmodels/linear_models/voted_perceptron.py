@@ -2,11 +2,11 @@
 This File contains algorithm for Voted Perceptron
 """
 
-from utilities import dot_product, make_data, update_w
+from .utilities import dot_product, make_data, update_w
 import copy
 
 
-class votedPerceptron:
+class VotedPerceptron:
     """ This class implements Voted Perceptron """
 
     def __init__(self, w, b, epochs):

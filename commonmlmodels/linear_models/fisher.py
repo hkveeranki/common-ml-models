@@ -3,7 +3,7 @@ This file contains code for Fisher Linear Discriminant
     """
 import numpy as np
 import copy
-from utilities import dot_product
+from .utilities import dot_product
 
 
 class Fisher:
