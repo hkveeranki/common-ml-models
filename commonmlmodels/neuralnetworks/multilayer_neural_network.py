@@ -44,10 +44,12 @@ class MultiLayerNeuralNetwork:
         self.add(output_layer)
         self.__compiled = True
 
-    def train(self, x_train, y_train, x_val, y_val, n_epochs, eta,
-              batch_size=64):
+    def train(self, x_train, y_train, x_val=None, y_val=None, n_epochs=100,
+              eta=0.001, batch_size=64):
         """
         Train the neural network for given number of epochs using given data.
+        :param y_val: Validation data samples
+        :param x_val: Validation data labels
         :param batch_size: batch size to be used
         :param x_train: training sample data
         :param y_train: training label data
@@ -58,6 +60,9 @@ class MultiLayerNeuralNetwork:
             sys.stderr.write(
                 "Please compile the network before calling train.\n")
         sample_length = len(x_train[0])
+        if not x_val or not y_val:
+            x_val, y_val = x_train, y_train
+
         if self.input_length != sample_length:
             sys.stderr.write(
                 ("Invalid training sample. input length for the neural network "
@@ -113,7 +118,7 @@ class MultiLayerNeuralNetwork:
         :return: output from the neural network
         """
         outputs = self.network[0].get_output(sample)
-        for layer in self.network:
+        for layer in self.network[1:]:
             # outputs of this layer are input to next layer
             outputs = layer.get_output(inputs=outputs)
         return np.array(outputs)

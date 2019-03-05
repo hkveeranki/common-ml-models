@@ -2,7 +2,7 @@ import sys
 
 import numpy as np
 
-from neuralnetworks.activationfunctions.activation_function import \
+from .activationfunctions.activation_function import \
     ActivationFunction
 
 
@@ -51,7 +51,7 @@ class Layer:
         :param expected: expected output from the layer
         :return: the error
         """
-        return expected - self.__output
+        return self.__output - expected
 
     def get_delta_from_layer(self):
         """Calculate the error to be propagated to the previous layer."""
@@ -61,7 +61,7 @@ class Layer:
         """
         Update delta for all the nodes in the neural network
         error = delta * derivative(output)
-        :param deltas: delta in the formula
+        :param deltas: value of delta in the above formula
         """
         self.__errors = deltas * self.activation_function.derivative(
             self.__output)
@@ -72,10 +72,9 @@ class Layer:
         """
         Update weights to all nodes of this layer
         :param eta: learning rate
-        :param inputs: inputs to the layer
         """
-        self.__weights += eta * self.__acc_weight_diffs
-        self.__bias += eta * self.__acc_bias_diffs
+        self.__weights -= eta * self.__acc_weight_diffs
+        self.__bias -= eta * self.__acc_bias_diffs
         # Normalize the values.
         new_weights = np.concatenate((self.__weights, self.__bias), axis=1)
         norm = np.linalg.norm(new_weights, axis=1, ord=2)

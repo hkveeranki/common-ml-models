@@ -1,7 +1,4 @@
-import scipy
-
 from .activation_function import ActivationFunction
-from numpy import exp
 import numpy as np
 
 
